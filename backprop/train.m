@@ -21,8 +21,6 @@ momentum = 0.9;  % Momentum; default = 0.9.
 
 numhid1 = 50;  % Dimensionality of embedding space; default = 50.
 numhid2 = 200;  % Number of units in hidden layer; default = 200.
-numhid1 = 5;
-numhid2 = 100;
 
 init_wt = 0.01;  % Standard deviation of the normal distribution
                  % which is sampled to get the initial weights; default = 0.01
@@ -73,9 +71,12 @@ for epoch = 1:epochs
             hid_to_output_weights, hid_bias, output_bias);
 
     % COMPUTE DERIVATIVE.
-    %% Expand the target to a sparse 1-of-K vector.
+    % Expand the target to a sparse 1-of-K vector.
     expanded_target_batch = expansion_matrix(:, target_batch);
-    %% Compute derivative of cross-entropy loss function.
+    % Compute derivative of cross-entropy loss function.
+    % derivative for softmax loss
+    % p_i - y_i
+    % dE/dy
     error_deriv = output_layer_state - expanded_target_batch;
 
     % MEASURE LOSS FUNCTION.
@@ -95,36 +96,22 @@ for epoch = 1:epochs
     end
 
     % BACK PROPAGATE.
-    %% OUTPUT LAYER.
+    % OUTPUT LAYER.
+    % dE/dw_h_o
     hid_to_output_weights_gradient =  hidden_layer_state * error_deriv';
     output_bias_gradient = sum(error_deriv, 2);
+    % dE/dhidden = dot(w_h_o, hidden * (1-hidden) * dE/dy)
     back_propagated_deriv_1 = (hid_to_output_weights * error_deriv) ...
       .* hidden_layer_state .* (1 - hidden_layer_state);
 
-    %% HIDDEN LAYER.
-    % FILL IN CODE. Replace the line below by one of the options.
+    % HIDDEN LAYER.
     embed_to_hid_weights_gradient = zeros(numhid1 * numwords, numhid2);
-    % Options:
-    % (a) embed_to_hid_weights_gradient = back_propagated_deriv_1' * embedding_layer_state;
     embed_to_hid_weights_gradient = embedding_layer_state * back_propagated_deriv_1';
-    % (c) embed_to_hid_weights_gradient = back_propagated_deriv_1;
-    % (d) embed_to_hid_weights_gradient = embedding_layer_state;
 
-    % FILL IN CODE. Replace the line below by one of the options.
     hid_bias_gradient = zeros(numhid2, 1);
-    % Options
     hid_bias_gradient = sum(back_propagated_deriv_1, 2);
-    % (b) hid_bias_gradient = sum(back_propagated_deriv_1, 1);
-    % (c) hid_bias_gradient = back_propagated_deriv_1;
-    % (d) hid_bias_gradient = back_propagated_deriv_1';
-
-    % FILL IN CODE. Replace the line below by one of the options.
     back_propagated_deriv_2 = zeros(numhid2, batchsize);
-    % Options
     back_propagated_deriv_2 = embed_to_hid_weights * back_propagated_deriv_1;
-    % (b) back_propagated_deriv_2 = back_propagated_deriv_1 * embed_to_hid_weights;
-    % (c) back_propagated_deriv_2 = back_propagated_deriv_1' * embed_to_hid_weights;
-    % (d) back_propagated_deriv_2 = back_propagated_deriv_1 * embed_to_hid_weights';
 
     word_embedding_weights_gradient(:) = 0;
     %% EMBEDDING LAYER.
